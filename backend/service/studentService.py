@@ -77,7 +77,7 @@ class StudentService:
         # 查询数据库，看看是否有其他用户使用了相同的 username
         query = select(Student).where(Student.username == student.username)
         exist_username: Student = db_session.execute(query).scalar()
-        if exist_username:
+        if exist_username and exist_username.id != student.id:
             raise UserNameExistException("用户名已存在")
         student.password = auth_handler.get_password_hash(student.password)
         set_attrs(exist_student, jsonable_encoder(student))

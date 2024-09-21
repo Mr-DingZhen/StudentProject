@@ -39,20 +39,26 @@
         <el-form-item label="课程名称">
           <el-input v-model="data.gradeForm.name" autocomplete="off" disabled/>
         </el-form-item>
-        <el-form-item label="分数">
-          <el-input v-model="data.gradeForm.score" autocomplete="off"/>
+        <el-form-item label="分数" prop="score">
+          <el-input
+              v-model="data.gradeForm.score"
+              autocomplete="off"
+              type="number"
+              @blur="validateScore"
+          />
         </el-form-item>
         <el-form-item label="评语">
           <el-input type="textarea" v-model="data.gradeForm.comment" autocomplete="off"/>
         </el-form-item>
       </el-form>
       <template #footer>
-        <span class="dialog-footer">
-          <el-button plain @click="data.formVisible = false">取消</el-button>
-          <el-button type="primary" plain @click="save">保存</el-button>
-        </span>
+    <span class="dialog-footer">
+      <el-button plain @click="data.formVisible = false">取消</el-button>
+      <el-button type="primary" plain @click="save">保存</el-button>
+    </span>
       </template>
     </el-dialog>
+
 
   </div>
 </template>
@@ -147,22 +153,36 @@ const addGrade = (row) => {
   data.gradeForm.comment = ""
 
 }
+const validateScore = () => {
+  const score = parseFloat(data.gradeForm.score);
+  if (isNaN(score)) {
+    ElMessage.error('请输入有效的分数（数字类型）');
+    data.gradeForm.score = ''; // 清空输入
+  }
+};
 
 const save = () => {
+  // 验证分数是否有效
+  const score = parseFloat(data.gradeForm.score);
+  if (isNaN(score)) {
+    ElMessage.error('请输入有效的分数（数字类型）');
+    return; // 直接返回，不发送请求
+  }
+
   request.post('/grade/add', data.gradeForm).then(res => {
     if (res.code === '200') {
-      ElMessage.success('操作成功')
-      data.formVisible = false
-      load()
+      ElMessage.success('操作成功');
+      data.formVisible = false;
+      load();
     } else {
-      ElMessage.error(res.msg)
+      ElMessage.error(res.msg);
     }
   }).catch(err => {
     if (err.response?.data?.code === '401') {
-      localStorage.removeItem('student-user')
+      localStorage.removeItem('student-user');
     }
-    ElMessage.error(err.response?.data?.msg || err.message)
-  })
-}
+    ElMessage.error(err.response?.data?.msg || err.message);
+  });
+};
 
 </script>

@@ -44,8 +44,14 @@
     <!--    评分表单-->
     <el-dialog v-model="data.formVisible" title="反馈信息" width="35%">
       <el-form :model="data.form" label-width="100px" label-position="right" style="padding-right: 40px">
-        <el-form-item label="分数" v-if="data.user.role === 'ADMIN'">
-          <el-input v-model="data.form.score" autocomplete="off"/>
+        <el-form-item label="分数" v-if="data.user.role === 'ADMIN'" prop="score">
+          <el-input
+              v-model="data.form.score"
+              type="number"
+              autocomplete="off"
+              :rules="[{ required: true, message: '请输入有效的分数', trigger: 'blur' }]"
+              @blur="validateScore"
+          />
         </el-form-item>
         <el-form-item label="教师评语" v-if="data.user.role === 'ADMIN'">
           <el-input type="textarea" v-model="data.form.comment" autocomplete="off"/>
@@ -110,7 +116,7 @@ const load = () => {
     }
     ElMessage.error(err.response?.data?.msg || err.message)
   })
-}
+};
 
 // 加载一次 获取学生选课数据
 load()
@@ -151,22 +157,35 @@ const handleEdit = (row) => {
   data.form = JSON.parse(JSON.stringify(row));
 
 }
-
+const validateScore = () => {
+  const score = parseFloat(data.gradeForm.score);
+  if (isNaN(score)) {
+    ElMessage.error('请输入有效的分数（数字类型）');
+    data.gradeForm.score = ''; // 清空输入
+  }
+};
 const save = () => {
+  const score = parseFloat(data.form.score);
+  if (isNaN(score)) {
+    ElMessage.error('请输入有效的分数（数字类型）');
+    return; // 直接返回，不发送请求
+  }
+
   request.put('/grade/update', data.form).then(res => {
     if (res.code === '200') {
-      ElMessage.success('操作成功')
-      data.formVisible = false
-      load()
+      ElMessage.success('操作成功');
+      data.formVisible = false;
+      load();
     } else {
-      ElMessage.error(res.msg)
+      ElMessage.error(res.msg);
     }
   }).catch(err => {
     if (err.response?.data?.code === '401') {
-      localStorage.removeItem('student-user')
+      localStorage.removeItem('student-user');
     }
-    ElMessage.error(err.response?.data?.msg || err.message)
-  })
-}
+    ElMessage.error(err.response?.data?.msg || err.message);
+  });
+};
+
 
 </script>
